@@ -62,7 +62,7 @@ router.post('/', [ auth, [
   if (twitter) profileFields.twitter = twitter;
   if (instagram) profileFields.instagram = instagram;
   if (linkedin) profileFields.linkedin = linkedin;
-  
+
   if (skills) {
     profileFields.skills = skills.split(',').map(skill => skill.trim());
   }

@@ -57,6 +57,12 @@ router.post('/', [ auth, [
   if (bio) profileFields.bio = bio;
   if (status) profileFields.status = status;
   if (github_user_name) profileFields.github_user_name = github_user_name;
+  if (youtube) profileFields.youtube = youtube;
+  if (facebook) profileFields.facebook = facebook;
+  if (twitter) profileFields.twitter = twitter;
+  if (instagram) profileFields.instagram = instagram;
+  if (linkedin) profileFields.linkedin = linkedin;
+  
   if (skills) {
     profileFields.skills = skills.split(',').map(skill => skill.trim());
   }
@@ -114,6 +120,25 @@ router.get('/user/:user_id', async (req, res) => {
     if(err.kind === 'ObjecId') {
       return res.status(400).json({ msg: 'Profile not found'});
     }
+    res.status(500).send('Server error');
+  }
+});
+
+// @route    DELETE api/profile
+// @descr    Delete profile, user & posts
+// @access   Private
+router.delete('/', auth, async (req, res) => {
+  try {
+    // Remove profile
+    await Profile.findOneAndRemove({ user: req.user.id });
+
+    // Remove user
+    await User.findOneAndRemove({ _id: req.user.id });
+
+    res.json({ msg: 'User deleted '});
+
+  } catch (err) {
+    console.error(err.message);
     res.status(500).send('Server error');
   }
 });

@@ -253,4 +253,25 @@ router.put('/education', [ auth, [
   }
 });
 
+// @route    DELETE api/profile/education/:edu_id
+// @descr    Delete education from profile
+// @access   Private
+router.delete('/education/:edu_id', auth, async (req, res) => {
+  try {
+    const profile = await Profile.findOneAndUpdate(
+      { user: req.user.id },
+      { $pull: { education: { _id: req.params.edu_id } } },
+      { new: true }
+    );
+
+    if (!profile) return res.status(400).json({ msg: 'Profile not found'});
+
+    res.json(profile);
+
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router;

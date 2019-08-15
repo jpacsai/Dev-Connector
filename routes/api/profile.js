@@ -4,14 +4,19 @@ const auth = require('../../middleware/auth');
 const { check, validationResult } = require('express-validator');
 
 const Profile = require('../../models/Profile');
+const Experience = require('../../models/Experience');
+const Education = require('../../models/Education');
 
 // @route    GET api/profile/me
 // @descr    Get current users profile
 // @access   Private
 router.get('/me', auth, async (req, res) => {
   try {
-    const profile = await Profile.findOne({ user: req.user.id }).populate('user', ['name', 'avatar']);
-
+    const profile = await Profile
+      .findOne({ user: req.user.id })
+      .populate('user', ['name', 'avatar'])
+      .populate('experience')
+      .populate('education');
     if (!profile) return res.status(400).json({ msg: 'There is no profile for this user' });
 
     res.json(profile);
@@ -110,7 +115,12 @@ router.get('/', async (req, res) => {
 // @access   Public
 router.get('/user/:user_id', async (req, res) => {
   try {
-    const profile = await Profile.findOne({ user: req.params.user_id }).populate('user', ['name', 'avatar']);
+    const profile = await Profile
+      .findOne({ user: req.params.user_id })
+      .populate('user', ['name', 'avatar'])
+      .populate('experience')
+      .populate('education');
+
     if (!profile) return res.status(400).json({ msg: 'Profile not found'});
     res.json(profile);
     
@@ -124,7 +134,7 @@ router.get('/user/:user_id', async (req, res) => {
 });
 
 // @route    PUT api/profile/experience
-// @descr    Add profile exprience
+// @descr    Add exprience
 // @access   Private
 router.put('/experience', [ auth, [
   check('title', 'Title is required').not().isEmpty(),
@@ -144,7 +154,8 @@ router.put('/experience', [ auth, [
     description
   } = req.body;
 
-  const newExp = {
+  const experienceFields = {
+    user: req.user.id,
     title,
     company,
     location,
@@ -155,19 +166,79 @@ router.put('/experience', [ auth, [
   }
 
   try {
+    const newExperience = new Experience(experienceFields);
+    console.log('creating experience');
+    await newExperience.save();
+    res.json(newExperience);
+
+  } catch(err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route    GET api/profile/experience
+// @descr    Get all user experience
+// @access   Private
+router.get('/experience', auth, async (req, res) => {
+  try {
+    const experiences = await Experience.find({ user: req.user.id });
+    res.json(experiences);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// @route    PUT api/profile/experience/:exp_id
+// @descr    Update experience
+// @access   Private
+router.put('/experience/:exp_id', auth, async (req, res) => {
+  const {
+    title,
+    company,
+    location,
+    from,
+    to,
+    current,
+    description
+  } = req.body;
+
+  const updateExp = {
+    title,
+    company,
+    location,
+    from,
+    to,
+    current,
+    description
+  }
+
+  console.log(updateExp);
+
+  try {
     const profile = await Profile.findOneAndUpdate(
-      { user: req.user.id },
-      { $push: { experience: { $each: [newExp], $position: 0 } } },
+      { user: req.user.id,
+        experience: {
+          "$elemMatch": {
+            "_id": req.params.exp_id
+          }
+        }
+      },
+      { $set: { "experience.$": updateExp } },
       { new: true }
     );
+
     if (!profile) return res.status(400).json({ msg: 'Profile not found'});
+
     res.json(profile);
-    
+
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
   }
 });
+
 
 // @route    DELETE api/profile/experience/:exp_id
 // @descr    Delete experience from profile

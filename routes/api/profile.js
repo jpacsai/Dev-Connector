@@ -214,24 +214,18 @@ router.put('/experience/:exp_id', auth, async (req, res) => {
     description
   }
 
-  console.log(updateExp);
-
   try {
-    const profile = await Profile.findOneAndUpdate(
-      { user: req.user.id,
-        experience: {
-          "$elemMatch": {
-            "_id": req.params.exp_id
-          }
-        }
-      },
-      { $set: { "experience.$": updateExp } },
+    const experience = await Experience.findOneAndUpdate(
+      { _id: req.params.exp_id },
+      { $set: updateExp },
       { new: true }
     );
 
-    if (!profile) return res.status(400).json({ msg: 'Profile not found'});
+    if (!experience) return res.status(400).json({ msg: 'Experience not found'});
 
-    res.json(profile);
+    console.log('updating experience');
+
+    res.json(experience);
 
   } catch (err) {
     console.error(err.message);
@@ -239,21 +233,18 @@ router.put('/experience/:exp_id', auth, async (req, res) => {
   }
 });
 
-
 // @route    DELETE api/profile/experience/:exp_id
 // @descr    Delete experience from profile
 // @access   Private
 router.delete('/experience/:exp_id', auth, async (req, res) => {
   try {
-    const profile = await Profile.findOneAndUpdate(
-      { user: req.user.id },
-      { $pull: { experience: { _id: req.params.exp_id } } },
-      { new: true }
-    );
+    const deletedExp = await Experience.findByIdAndDelete(req.params.exp_id);
 
-    if (!profile) return res.status(400).json({ msg: 'Profile not found'});
+    console.log('deleting experience');
 
-    res.json(profile);
+    if (!deletedExp) return res.status(400).json({ msg: 'Experience not found'});
+
+    res.json(deletedExp);
 
   } catch (err) {
     console.error(err.message);
@@ -281,7 +272,8 @@ router.put('/education', [ auth, [
     description
   } = req.body;
 
-  const newEdu = {
+  const educationFields = {
+    user: req.user.id,
     school,
     certificate,
     from,
@@ -290,14 +282,62 @@ router.put('/education', [ auth, [
   }
 
   try {
-    const profile = await Profile.findOneAndUpdate(
-      { user: req.user.id },
-      { $push: { education: { $each: [newEdu], $position: 0 } } },
+    const newEducation = new Education(educationFields);
+    console.log('creating education');
+    await newEducation.save();
+    res.json(newEducation);
+
+  } catch(err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route    GET api/profile/education
+// @descr    Get all user education
+// @access   Private
+router.get('/education', auth, async (req, res) => {
+  try {
+    const educations = await Education.find({ user: req.user.id });
+    res.json(educations);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// @route    PUT api/profile/education/:edu_id
+// @descr    Update education
+// @access   Private
+router.put('/education/:edu_id', auth, async (req, res) => {
+  const {
+    school,
+    certificate,
+    from,
+    field_of_study,
+    description
+  } = req.body;
+
+  const updatedEdu = {
+    school,
+    certificate,
+    from,
+    field_of_study,
+    description
+  }
+
+  try {
+    const education = await Education.findOneAndUpdate(
+      { _id: req.params.edu_id },
+      { $set: updatedEdu },
       { new: true }
     );
-    if (!profile) return res.status(400).json({ msg: 'Profile not found'});
-    res.json(profile);
-    
+
+    if (!education) return res.status(400).json({ msg: 'Education not found'});
+
+    console.log('updating education');
+    res.json(education);
+
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -309,15 +349,13 @@ router.put('/education', [ auth, [
 // @access   Private
 router.delete('/education/:edu_id', auth, async (req, res) => {
   try {
-    const profile = await Profile.findOneAndUpdate(
-      { user: req.user.id },
-      { $pull: { education: { _id: req.params.edu_id } } },
-      { new: true }
-    );
+    const deletedEdu = await Education.findByIdAndDelete(req.params.edu_id);
 
-    if (!profile) return res.status(400).json({ msg: 'Profile not found'});
+    console.log('deleting education');
 
-    res.json(profile);
+    if (!deletedEdu) return res.status(400).json({ msg: 'Education not found'});
+
+    res.json(deletedEdu);
 
   } catch (err) {
     console.error(err.message);

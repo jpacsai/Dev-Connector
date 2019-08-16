@@ -140,10 +140,10 @@ router.get('/user/:user_id', auth, async (req, res) => {
   }
 });
 
-// @route    PUT api/profile/experience
+// @route    POST api/profile/experience
 // @descr    Add exprience
 // @access   Private
-router.put('/experience', [ auth, profileMiddleware, [
+router.post('/experience', [ auth, profileMiddleware, [
   check('title', 'Title is required').not().isEmpty(),
   check('company', 'Company is required').not().isEmpty(),
   check('from', 'From date is required').not().isEmpty(),
@@ -273,10 +273,10 @@ router.delete('/experience/:exp_id', auth, async (req, res) => {
   }
 });
 
-// @route    PUT api/profile/education
+// @route    POST api/profile/education
 // @descr    Add profile education
 // @access   Private
-router.put('/education', [ auth, profileMiddleware, [
+router.post('/education', [ auth, profileMiddleware, [
   check('school', 'School is required').not().isEmpty(),
   check('certificate', 'Certificate is required').not().isEmpty(),
   check('from', 'From date is required').not().isEmpty(),

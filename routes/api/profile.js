@@ -257,7 +257,12 @@ router.delete('/experience/:exp_id', auth, async (req, res) => {
     console.log('deleting experience');
 
     if (!deletedExp) return res.status(400).json({ msg: 'Experience not found'});
-
+    
+    // Removing experience reference from profile
+    const profile = await Profile.findOne({ user: req.user.id });
+    profile.experience.remove(req.params.exp_id);
+    profile.save();
+    
     res.json(deletedExp);
 
   } catch (err) {
@@ -378,6 +383,11 @@ router.delete('/education/:edu_id', auth, async (req, res) => {
     console.log('deleting education');
 
     if (!deletedEdu) return res.status(400).json({ msg: 'Education not found'});
+
+    // Removing experience reference from profile
+    const profile = await Profile.findOne({ user: req.user.id });
+    profile.education.remove(req.params.edu_id);
+    profile.save();
 
     res.json(deletedEdu);
 

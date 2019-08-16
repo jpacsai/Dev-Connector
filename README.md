@@ -4,6 +4,8 @@ Coursework for [Udemy - MERN Stack Front To Back](https://www.udemy.com/mern-sta
 
 The aim of the project was to build and deploy a social network with Node.js, Express, React, Redux & MongoDB.
 
+Detailed documentation is in the [Wiki](https://github.com/jpacsai/Dev-Connector/wiki).
+
 ## 📑 Table of Contents
 * [Live link](#-live-link)
 * [Dev stack](#-dev-stack)

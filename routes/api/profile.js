@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../../middleware/auth');
+const profileMiddleware = require('../../middleware/profile');
 const { check, validationResult } = require('express-validator');
 
 const Profile = require('../../models/Profile');
@@ -17,6 +18,7 @@ router.get('/me', auth, async (req, res) => {
       .populate('user', ['name', 'avatar'])
       .populate('experience')
       .populate('education');
+
     if (!profile) return res.status(400).json({ msg: 'There is no profile for this user' });
 
     res.json(profile);
@@ -101,7 +103,11 @@ router.post('/', [ auth, [
 // @access   Public
 router.get('/', async (req, res) => {
   try {
-    const profiles = await Profile.find().populate('user', ['name', 'avatar']);
+    const profiles = await Profile.find()
+      .populate('user', ['name', 'avatar'])
+      .populate('experience')
+      .populate('education');
+
     res.json(profiles);
 
   } catch (err) {
@@ -113,11 +119,10 @@ router.get('/', async (req, res) => {
 // @route    GET api/profile/user/:user_id
 // @descr    Get profile by user ID
 // @access   Public
-router.get('/user/:user_id', async (req, res) => {
+router.get('/user/:user_id', auth, async (req, res) => {
   try {
     const profile = await Profile
       .findOne({ user: req.params.user_id })
-      .populate('user', ['name', 'avatar'])
       .populate('experience')
       .populate('education');
 
@@ -136,7 +141,7 @@ router.get('/user/:user_id', async (req, res) => {
 // @route    PUT api/profile/experience
 // @descr    Add exprience
 // @access   Private
-router.put('/experience', [ auth, [
+router.put('/experience', [ auth, profileMiddleware, [
   check('title', 'Title is required').not().isEmpty(),
   check('company', 'Company is required').not().isEmpty(),
   check('from', 'From date is required').not().isEmpty(),
@@ -155,7 +160,7 @@ router.put('/experience', [ auth, [
   } = req.body;
 
   const experienceFields = {
-    user: req.user.id,
+    profile: req.profileID,
     title,
     company,
     location,
@@ -167,10 +172,19 @@ router.put('/experience', [ auth, [
 
   try {
     const newExperience = new Experience(experienceFields);
-    console.log('creating experience');
-    await newExperience.save();
-    res.json(newExperience);
 
+    console.log('creating experience');
+
+    const { id: newExpID } = await newExperience.save();
+
+    // Update experience reference list in Profile
+    await Profile.findOneAndUpdate(
+      { user: req.user.id },
+      { $push: { experience: newExpID } },
+      { new: true }
+    );
+
+    res.json(newExperience);
   } catch(err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -180,9 +194,9 @@ router.put('/experience', [ auth, [
 // @route    GET api/profile/experience
 // @descr    Get all user experience
 // @access   Private
-router.get('/experience', auth, async (req, res) => {
+router.get('/experience', auth, profileMiddleware, async (req, res) => {
   try {
-    const experiences = await Experience.find({ user: req.user.id });
+    const experiences = await Experience.find({ profile: req.profileID });
     res.json(experiences);
   } catch (err) {
     console.error(err.message);
@@ -255,7 +269,7 @@ router.delete('/experience/:exp_id', auth, async (req, res) => {
 // @route    PUT api/profile/education
 // @descr    Add profile education
 // @access   Private
-router.put('/education', [ auth, [
+router.put('/education', [ auth, profileMiddleware, [
   check('school', 'School is required').not().isEmpty(),
   check('certificate', 'Certificate is required').not().isEmpty(),
   check('from', 'From date is required').not().isEmpty(),
@@ -273,7 +287,7 @@ router.put('/education', [ auth, [
   } = req.body;
 
   const educationFields = {
-    user: req.user.id,
+    profile: req.profileID,
     school,
     certificate,
     from,
@@ -284,7 +298,17 @@ router.put('/education', [ auth, [
   try {
     const newEducation = new Education(educationFields);
     console.log('creating education');
-    await newEducation.save();
+    const { id: newEduID } = await newEducation.save();
+
+    console.log
+
+    // Update education reference list in Profile
+    await Profile.findOneAndUpdate(
+      { user: req.user.id },
+      { $push: { education: newEduID } },
+      { new: true }
+    );
+
     res.json(newEducation);
 
   } catch(err) {
@@ -296,9 +320,9 @@ router.put('/education', [ auth, [
 // @route    GET api/profile/education
 // @descr    Get all user education
 // @access   Private
-router.get('/education', auth, async (req, res) => {
+router.get('/education', auth, profileMiddleware, async (req, res) => {
   try {
-    const educations = await Education.find({ user: req.user.id });
+    const educations = await Education.find({ profile: req.profileID });
     res.json(educations);
   } catch (err) {
     console.error(err.message);

@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const EducationSchema = new mongoose.Schema({
-  user: {
+  profile: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'user'
+    ref: 'profile'
   },
   school: {
     type: String,

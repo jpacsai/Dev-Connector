@@ -9,7 +9,7 @@ const User = require('../../models/User');
 const Comment = require('../../models/Comment');
 
 // @route    POST api/posts
-// @descr    Create a post
+// @descr    Create post
 // @access   Public
 router.post('/', [auth, [check('text', 'Text is required').not().isEmpty()]
 ], async (req, res) => {
@@ -30,6 +30,20 @@ router.post('/', [auth, [check('text', 'Text is required').not().isEmpty()]
     const post = await newPost.save();
 
     res.json(post);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route    GET api/posts
+// @descr    Get all posts
+// @access   Private
+router.get('/', auth, async (req, res) => {
+  try {
+    const posts = await Post.find().sort({ date: -1 });
+
+    res.json(posts);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');

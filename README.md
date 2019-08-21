@@ -27,4 +27,4 @@ coming soon...
 ### How to start the app:
 - clone/download repo
 - install dependencies `npm ci`
-- start server: `npm start` (or `npm run server` which uses nodemon)
+- start server: `npm run server`

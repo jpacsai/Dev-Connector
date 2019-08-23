@@ -92,4 +92,45 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
+// @route    PUT api/posts/:id/like
+// @descr    Like a post
+// @access   Private
+router.put('/:id/like', auth, async (req, res) => {
+  try {
+    Post.findById(req.params.id, async (err, post) => {
+      if (err) return res.status(500).send('Server Error');
+
+      if (!post) return res.status(404).json({ msg: 'Post not found'});
+
+      // Unlike if the post has already been liked
+      if (post.likes.filter(like => like.user.toString() === req.user.id).length > 0) {
+        const updated = await Post.findByIdAndUpdate(
+          req.params.id,
+          { $pull: { likes : { user: req.user.id } } },
+          { new: true }
+        );
+
+        console.log('Post unliked');
+
+        return res.json(updated);
+      }
+
+      // Like if the post has not been liked
+
+      const updated = await Post.findByIdAndUpdate(
+        req.params.id,
+        { $push: { likes: { $each: [ { user: req.user.id } ] }, $position: 0 }},
+        { new: true }
+      );
+
+      console.log('Post liked');
+
+      res.json(updated);
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router;

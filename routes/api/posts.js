@@ -36,12 +36,26 @@ router.post('/', [auth, [check('text', 'Text is required').not().isEmpty()]
   }
 });
 
-// @route    GET api/posts
+// @route    GET api/posts/all
 // @descr    Get all posts
+// @access   Private
+router.get('/all', auth, async (req, res) => {
+  try {
+    const posts = await Post.find().sort({ date: -1 });
+
+    res.json(posts);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route    GET api/posts
+// @descr    Get all posts of a user
 // @access   Private
 router.get('/', auth, async (req, res) => {
   try {
-    const posts = await Post.find().sort({ date: -1 });
+    const posts = await Post.find({ user: req.user.id }).sort({ date: -1 });
 
     res.json(posts);
   } catch (err) {

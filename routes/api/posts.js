@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { check, validationResult } = require('express-validator');
 const auth = require('../../middleware/auth');
+const postMiddleware = require('../../middleware/post');
 
 const Post = require('../../models/Post');
 const Profile = require('../../models/Profile');
@@ -11,7 +12,9 @@ const Comment = require('../../models/Comment');
 // @route    POST api/posts
 // @descr    Create post
 // @access   Public
-router.post('/', [auth, [check('text', 'Text is required').not().isEmpty()]
+router.post('/', [
+  auth,
+  [ check('text', 'Text is required').not().isEmpty() ]
 ], async (req, res) => {
   const errors = validationResult(req);
 
@@ -143,6 +146,50 @@ router.put('/:id/like', auth, async (req, res) => {
     });
   } catch (err) {
     console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route    PUT api/posts/:id/comment
+// @descr    Comment on a post
+// @access   Private
+router.put('/:id/comment', [
+  auth,
+  [ check('text', 'Text is required').not().isEmpty() ],
+  postMiddleware
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+
+    if(!user) return res.status(404).json({ msg: 'User not found'});
+
+    const newComment = new Comment({
+      post: req.postID,
+      text: req.body.text,
+      name: user.name,
+      avatar: user.avatar
+    });
+
+    // TODO: save newComment to db
+    // TODO: populate post with comment
+
+    /* const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { $push: { comment: newComment } },
+      { new: true }   
+    ); */
+
+    if(!post) return res.status(404).json({ msg: 'Post not found'});
+    
+    res.json(post);
+  } catch (err) {
+    console.error(err.message);
+
+    if(err.kind === 'ObjectId') return res.status(404).json({ msg: 'Post not found'});
+
     res.status(500).send('Server Error');
   }
 });

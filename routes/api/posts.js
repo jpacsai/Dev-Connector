@@ -151,7 +151,7 @@ router.put('/:id/like', auth, async (req, res) => {
   }
 });
 
-// @route    PUT api/posts/:id/comment
+// @route    POST api/posts/:id/comment
 // @descr    Comment on a post
 // @access   Private
 router.post('/:id/comment', [

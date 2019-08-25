@@ -5,7 +5,6 @@ const auth = require('../../middleware/auth');
 const postMiddleware = require('../../middleware/post');
 
 const Post = require('../../models/Post');
-const Profile = require('../../models/Profile');
 const User = require('../../models/User');
 const Comment = require('../../models/Comment');
 
@@ -44,6 +43,7 @@ router.post('/', [
 // @access   Private
 router.get('/all', auth, async (req, res) => {
   try {
+    // TODO: populate post with comment
     const posts = await Post.find().sort({ date: -1 });
 
     res.json(posts);
@@ -58,6 +58,7 @@ router.get('/all', auth, async (req, res) => {
 // @access   Private
 router.get('/', auth, async (req, res) => {
   try {
+    // TODO: populate post with comment
     const posts = await Post.find({ user: req.user.id }).sort({ date: -1 });
 
     res.json(posts);
@@ -72,6 +73,7 @@ router.get('/', auth, async (req, res) => {
 // @access   Private
 router.get('/:id', auth, async (req, res) => {
   try {
+    // TODO: populate post with comment
     const post = await Post.findById(req.params.id);
 
     if(!post) return res.status(404).json({ msg: 'Post not found'});
@@ -133,7 +135,6 @@ router.put('/:id/like', auth, async (req, res) => {
       }
 
       // Like if the post has not been liked
-
       const updated = await Post.findByIdAndUpdate(
         req.params.id,
         { $push: { likes: { $each: [ { user: req.user.id } ] }, $position: 0 }},
@@ -153,7 +154,7 @@ router.put('/:id/like', auth, async (req, res) => {
 // @route    PUT api/posts/:id/comment
 // @descr    Comment on a post
 // @access   Private
-router.put('/:id/comment', [
+router.post('/:id/comment', [
   auth,
   [ check('text', 'Text is required').not().isEmpty() ],
   postMiddleware
@@ -166,25 +167,29 @@ router.put('/:id/comment', [
 
     if(!user) return res.status(404).json({ msg: 'User not found'});
 
-    const newComment = new Comment({
+    const commentFileds = {
       post: req.postID,
       text: req.body.text,
       name: user.name,
       avatar: user.avatar
-    });
+    };
 
-    // TODO: save newComment to db
-    // TODO: populate post with comment
+    const newExperience = new Comment(commentFileds);
 
-    /* const post = await Post.findByIdAndUpdate(
+    console.log('creating comment');
+
+    const { id: newCommentID } = await newExperience.save();
+
+    // Update experience reference list in Profile
+    const post = await Post.findByIdAndUpdate(
       req.params.id,
-      { $push: { comment: newComment } },
-      { new: true }   
-    ); */
+      { $push: { comments: newCommentID } },
+      { new: true }
+    );
 
     if(!post) return res.status(404).json({ msg: 'Post not found'});
     
-    res.json(post);
+    res.json(newExperience);
   } catch (err) {
     console.error(err.message);
 

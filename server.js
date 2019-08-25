@@ -2,10 +2,10 @@ const express = require('express');
 const connectDB = require('./config/db');
 
 // Import routes
-const auth = require('./routes/api/auth');
-const posts = require('./routes/api/posts');
-const profile = require('./routes/api/profile');
-const users = require('./routes/api/users');
+const auth = require('./server/routes/api/auth');
+const posts = require('./server/routes/api/posts');
+const profile = require('./server/routes/api/profile');
+const users = require('./server/routes/api/users');
 
 const app = express();
 

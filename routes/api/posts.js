@@ -43,8 +43,9 @@ router.post('/', [
 // @access   Private
 router.get('/all', auth, async (req, res) => {
   try {
-    // TODO: populate post with comment
-    const posts = await Post.find().sort({ date: -1 });
+    const posts = await Post.find()
+      .populate('comments')
+      .sort({ date: -1 });
 
     res.json(posts);
   } catch (err) {
@@ -58,8 +59,9 @@ router.get('/all', auth, async (req, res) => {
 // @access   Private
 router.get('/', auth, async (req, res) => {
   try {
-    // TODO: populate post with comment
-    const posts = await Post.find({ user: req.user.id }).sort({ date: -1 });
+    const posts = await Post.find({ user: req.user.id })
+      .populate('comments')
+      .sort({ date: -1 });
 
     res.json(posts);
   } catch (err) {
@@ -73,8 +75,7 @@ router.get('/', auth, async (req, res) => {
 // @access   Private
 router.get('/:id', auth, async (req, res) => {
   try {
-    // TODO: populate post with comment
-    const post = await Post.findById(req.params.id);
+    const post = await Post.findById(req.params.id).populate('comments');
 
     if(!post) return res.status(404).json({ msg: 'Post not found'});
     res.json(post);
@@ -127,7 +128,7 @@ router.put('/:id/like', auth, async (req, res) => {
           req.params.id,
           { $pull: { likes : { user: req.user.id } } },
           { new: true }
-        );
+        ).populate('comments');
 
         console.log('Post unliked');
 
@@ -139,7 +140,7 @@ router.put('/:id/like', auth, async (req, res) => {
         req.params.id,
         { $push: { likes: { $each: [ { user: req.user.id } ] }, $position: 0 }},
         { new: true }
-      );
+      ).populate('comments');
 
       console.log('Post liked');
 
